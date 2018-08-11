@@ -2,17 +2,27 @@
 
 ## ファイル構成
 root/
+
 　├ datafile/
+
 　│　└ kihuFixed.7z
+
 　├ model/
+
 　│　├ black.npz #先攻用モデル
+
 　│　└ white.npz #後攻用モデル
+
 　└ python/
+
 　 　├ make_model.py #モデル作成用ファイル
+
 　 　└ predict.py #予測用ファイル
 
 
 ## モデルの説明
+
+```
 
 X = [[[0,0,0,0,0,0,0,0],\
       [0,0,0,0,0,0,0,0],\
@@ -25,6 +35,8 @@ X = [[[0,0,0,0,0,0,0,0],\
 
 Y = 20　#盤面での位置(左上1から始まって右下64までの連番)
 
+```
+
 - X,Yをセットで学習させたので、X型のデータを入れたらYの値が返却される。
 
 
@@ -33,7 +45,9 @@ Y = 20　#盤面での位置(左上1から始まって右下64までの連番)
 - パラメータや学習回数を変更させたい場合にはmake_model.pyの各値を変更すると新しい学習済モデルを作成できる
 
 例
-"""
+
+```
+
 class MLP(Chain):
     def __init__(self):
         super(MLP, self).__init__(
@@ -47,10 +61,12 @@ class MLP(Chain):
         h2 = F.relu(self.l2(h1))
         y = self.l3(h2)
         return y
-"""
 
-"""
-    optimizer = optimizers.SGD() ←ここ(SGD)
+```
+
+```
+
+optimizer = optimizers.SGD() ←ここ(SGD)
     optimizer.setup(model)
     
     updater = training.StandardUpdater(train_iter, optimizer)
@@ -58,7 +74,7 @@ class MLP(Chain):
     trainer.extend(extensions.PlotReport(['main/accuracy', 'val/main/accuracy'], x_key='epoch', file_name='accuracy.png', trigger=(1,'epoch')))
     trainer.run()
 
-"""
+```
 
 ## 予測の仕方
 - predict.pyで予測できる
