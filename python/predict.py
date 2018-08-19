@@ -1,8 +1,10 @@
 #-- 作成したモデルを読み込んで実践 --#
-import sys
-import numpy as np
-from chainer import Link, Chain, ChainList,serializers
-import sys
+import chainer
+from chainer import cuda, Function, gradient_check, report, training, utils, Variable
+from chainer import datasets, iterators, optimizers, serializers
+from chainer import Link, Chain, ChainList
+import chainer.functions as F
+import chainer.links as L
 
 #入ってくる値の変換機(gColを"A"などに変えても使える,rowは数値指定)
 gCol = ('1','2','3','4','5','6','7','8')
@@ -53,12 +55,35 @@ class Classifier(Chain):
         report({'loss': loss, 'accuracy': accuracy}, self)
         return loss
 
+#-- 必要な関数を定義　--#
+
+def conv_pos_to_num(position):
+  try:
+    col_num = gCol.index(position[0])+1
+    row_num = int(position[1])
+    pos_num = (row_num-1)*8 + col_num
+  except:
+    pos_num = 0
+    
+  return pos_num
+
+def conv_num_to_pos(pos_num):
+    pos = []
+    row,col= divmod(pos_num,8)
+    if col == 0:
+      pos.append(gCol[7])
+      pos.append(row)
+    else:
+      pos.append(gCol[col-1])    
+      pos.append(str(row+1))
+      
+    return pos
 
 # コマンドラインからの引数受け取り
 argvs = sys.argv
 argc = len(argvs)
 
-if (argc != 4):   # 引数が足りない場合は、その旨を表示
+if (argc != 4):
     print '引数が不正です。'
     quit()
 
@@ -86,14 +111,14 @@ def predict_best_pos(X1_,possible_num):
     return conv_num_to_pos(best_num)
 
 # test-data(こんなデータを入れてね！)
-X1_ = [[[0,0,0,0,0,0,0,0],\
-        [0,0,0,0,0,0,0,0],\
-        [0,0,0,0,0,0,0,0],\
-        [0,0,0,2,1,0,0,0],\
-        [0,0,0,1,2,0,0,0],\
-        [0,0,0,0,0,0,0,0],\
-        [0,0,0,0,0,0,0,0],\
-        [0,0,0,0,0,0,0,0]]]
+X1_ = [[0,0,0,0,0,0,0,0],\
+       [0,0,0,0,0,0,0,0],\
+       [0,0,0,0,0,0,0,0],\
+       [0,0,0,2,1,0,0,0],\
+       [0,0,0,1,2,0,0,0],\
+       [0,0,0,0,0,0,0,0],\
+       [0,0,0,0,0,0,0,0],\
+       [0,0,0,0,0,0,0,0]]
 
 possible_pos = [["4","3"],["3","4"],["6","5"],["5","6"]]
 
