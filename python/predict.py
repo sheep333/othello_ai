@@ -1,4 +1,8 @@
 #-- 作成したモデルを読み込んで実践 --#
+import sys
+import numpy as np
+from chainer import Link, Chain, ChainList,serializers
+import sys
 
 #入ってくる値の変換機(gColを"A"などに変えても使える,rowは数値指定)
 gCol = ('1','2','3','4','5','6','7','8')
@@ -23,19 +27,54 @@ def conv_num_to_pos(pos_num):
     return pos
 
 
+# 分類器作成
+class MLP(Chain):
+    def __init__(self):
+        super(MLP, self).__init__(
+                l1=L.Linear(64, 100),
+                l2=L.Linear(100, 100),
+                l3=L.Linear(100, 65),
+        )
+
+    def __call__(self, x):
+        h1 = F.relu(self.l1(x))
+        h2 = F.relu(self.l2(h1))
+        y = self.l3(h2)
+        return y
+
+class Classifier(Chain):
+    def __init__(self, predictor):
+        super(Classifier, self).__init__(predictor=predictor)
+
+    def __call__(self, x, t):
+        y = self.predictor(x)
+        loss = F.softmax_cross_entropy(y, t)
+        accuracy = F.accuracy(y, t)
+        report({'loss': loss, 'accuracy': accuracy}, self)
+        return loss
+
+
+# コマンドラインからの引数受け取り
+argvs = sys.argv
+argc = len(argvs)
+
+if (argc != 4):   # 引数が足りない場合は、その旨を表示
+    print '引数が不正です。'
+    quit()
+
 # 先攻だったらblack,後攻だったらwhiteのモデルを読み込む
 # 指定しなければ通常の学習モデルが読み込まれる
-start_with = "black"
+start_with = argvs[1]
 
 model = Classifier(MLP())
 if start_with == "black":
-    serializers.load_npz("black.npz", model)
+    serializers.load_npz("../model/black.npz", model)
 elif start_with == "white":
-    serializers.load_npz("white.npz", model)
+    serializers.load_npz("../model/white.npz", model)
 else:
-    serializers.load_npz("model.npz", model)
-  
-#
+    serializers.load_npz("../model/model.npz", model)
+
+
 def predict_best_pos(X1_,possible_num):
     best_num = 0 #置ける中でベストの位置
     best_predict = 0 #予測最高値
@@ -57,6 +96,9 @@ X1_ = [[[0,0,0,0,0,0,0,0],\
         [0,0,0,0,0,0,0,0]]]
 
 possible_pos = [["4","3"],["3","4"],["6","5"],["5","6"]]
+
+X1_ = argvs[2]
+possible_pos = argvs[3]
 
 # 置ける場所の受け取り
 possible_num = [conv_pos_to_num(position) for position in possible_pos]
