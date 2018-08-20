@@ -103,11 +103,11 @@ if (argc != 4):
 
 model = Classifier(MLP())
 if start_with == "black":
-    serializers.load_npz("model/black.npz", model)
+    serializers.load_npz("../model/black.npz", model)
 elif start_with == "white":
-    serializers.load_npz("model/white.npz", model)
+    serializers.load_npz("../model/white.npz", model)
 else:
-    serializers.load_npz("model/model.npz", model)
+    serializers.load_npz("../model/model.npz", model)
 
 
 def predict_best_pos(X1_,possible_num):
